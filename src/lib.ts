@@ -130,9 +130,6 @@ export default class VoiceChat {
 			throw log.error("Another audio stream is already active!");
 		}
 
-		this.isStreaming = true;
-		this.isPaused = false;
-
 		try {
 			const pcmBuffer = await SoundConverter.convertToPCM(
 				audio,
