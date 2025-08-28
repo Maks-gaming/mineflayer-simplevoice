@@ -17,7 +17,6 @@ import { StoredData } from "./packet/StoredData";
 import { Utils } from "./utils";
 import SimpleVoiceSocketClient from "./VoiceChatSocketClient";
 
-// Интерфейс для пакетов
 interface PacketRegistry {
 	requestSecretPacket: ServerboundRequestSecretPacket;
 	secretPacket: ClientboundSecretPacket;
@@ -43,7 +42,6 @@ export default class VoiceChatClient {
 	constructor(bot: Bot) {
 		this.bot = bot;
 		this.socketClient = new SimpleVoiceSocketClient(bot);
-		this.logger.debug("Initializing SimpleVoiceClient");
 
 		this.packets = this.initializePackets();
 		this.setupEvents();
