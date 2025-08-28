@@ -1,0 +1,46 @@
+{
+	"name": "mineflayer-simplevoice",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/Maks-gaming/mineflayer-simplevoice.git"
+	},
+	"version": "1.0.0",
+	"description": "A plugin for mineflayer that allows you to play sounds with the Simple Voicechat mod",
+	"main": "lib/index.js",
+	"types": "lib/index.d.ts",
+	"scripts": {
+		"prepare": "tsc && require-self",
+		"clean": "rm -rf lib"
+	},
+	"keywords": [
+		"mineflayer",
+		"plugin"
+	],
+	"bugs": {
+		"url": "https://github.com/Maks-gaming/mineflayer-simplevoice/issues"
+	},
+	"homepage": "https://github.com/Maks-gaming/mineflayer-simplevoice",
+	"author": "mgcode",
+	"license": "MIT",
+	"dependencies": {
+		"@discordjs/opus": "^0.9.0",
+		"@ffmpeg-installer/ffmpeg": "^1.1.0",
+		"crypto": "^1.0.1",
+		"fluent-ffmpeg": "^2.1.2",
+		"node-rsa": "^1.1.1",
+		"tslog": "^4.9.2"
+	},
+	"devDependencies": {
+		"@types/fluent-ffmpeg": "^2.1.21",
+		"@types/node": "^20.0.0",
+		"@types/node-rsa": "^1.1.4",
+		"mineflayer": "^4.32.0",
+		"prettier-plugin-organize-imports": "^3.2.4",
+		"require-self": "^0.2.3",
+		"standard": "^17.0.0",
+		"typescript": "^5.0.3"
+	},
+	"files": [
+		"lib/**/*"
+	]
+}
