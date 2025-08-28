@@ -1,12 +1,5 @@
 import { Buffer } from "buffer";
 
-// Интерфейс для UUID
-interface UUID {
-	mostSignificantBits: bigint;
-	leastSignificantBits: bigint;
-}
-
-// Интерфейс для совместимости с методами ByteBuf
 interface ByteBuf {
 	capacity(newCapacity: number): this;
 	capacity(): number;
@@ -75,29 +68,25 @@ export class FriendlyByteBuf implements ByteBuf {
 	constructor(byteBuf?: Buffer) {
 		this.buf = byteBuf || Buffer.alloc(0);
 		this._readerIndex = 0;
-		this._writerIndex = byteBuf ? byteBuf.length : 0; // Устанавливаем _writerIndex равным длине буфера
+		this._writerIndex = byteBuf ? byteBuf.length : 0;
 		this.markedReaderIndex = null;
 		this.markedWriterIndex = null;
 	}
 
-	// Получение базового Buffer
 	public getUnderlyingByteBuf(): Buffer {
 		return this.buf;
 	}
 
-	// Получение всех байтов буфера
 	public getAllBytes(): Uint8Array {
 		return new Uint8Array(this.buf.slice(0, this.capacity()));
 	}
 
-	// Запись массива байтов с VarInt длиной
 	public writeByteArray(bs: Uint8Array | Buffer): this {
 		this.writeVarInt(bs.length);
 		this.writeBytes(Buffer.from(bs));
 		return this;
 	}
 
-	// Чтение массива байтов с VarInt длиной
 	public readByteArray(maxLength: number = this.readableBytes()): Uint8Array {
 		const length = this.readVarInt();
 		if (length > maxLength) {
@@ -110,7 +99,6 @@ export class FriendlyByteBuf implements ByteBuf {
 		return bs;
 	}
 
-	// Чтение VarInt
 	public readVarInt(): number {
 		let value = 0;
 		let position = 0;
@@ -158,7 +146,6 @@ export class FriendlyByteBuf implements ByteBuf {
 		return this;
 	}
 
-	// Запись VarInt
 	public writeVarInt(value: number): this {
 		let v = value;
 		while ((v & ~0x7f) !== 0) {
@@ -169,7 +156,6 @@ export class FriendlyByteBuf implements ByteBuf {
 		return this;
 	}
 
-	// Чтение строки в UTF-8
 	public readUtf(maxLength: number = 32767): string {
 		const length = this.readVarInt();
 		if (length > maxLength * 4) {
@@ -196,7 +182,6 @@ export class FriendlyByteBuf implements ByteBuf {
 		return str;
 	}
 
-	// Запись строки в UTF-8
 	public writeUtf(str: string, maxLength: number = 32767): this {
 		const bs = Buffer.from(str, "utf8");
 		if (bs.length > maxLength) {
@@ -209,7 +194,6 @@ export class FriendlyByteBuf implements ByteBuf {
 		return this;
 	}
 
-	// Реализация методов ByteBuf
 	public capacity(): number;
 	public capacity(newCapacity: number): this;
 	public capacity(newCapacity?: number): number | this {
@@ -230,7 +214,7 @@ export class FriendlyByteBuf implements ByteBuf {
 	}
 
 	public maxCapacity(): number {
-		return 2 ** 31 - 1; // Аналогично Netty
+		return 2 ** 31 - 1;
 	}
 
 	public readerIndex(): number;
