@@ -33,7 +33,7 @@ export default class VoiceChat {
 		const uuid = this._client.getIdByName(player);
 		if (!uuid) return undefined;
 
-		const data = this._client.players.get(uuid)!;
+		const data = this._client.getPlayers().get(uuid)!;
 		const playerInfo = {
 			...data,
 			playerUUID: Utils.uuidToString(data.playerUUID),
@@ -43,7 +43,7 @@ export default class VoiceChat {
 	}
 
 	getPlayers() {
-		return Array.from(this._client.players.values()).map((data) => ({
+		return Array.from(this._client.getPlayers().values()).map((data) => ({
 			...data,
 			playerUUID: Utils.uuidToString(data.playerUUID),
 			group: data.group ? Utils.uuidToString(data.group) : undefined,
@@ -51,18 +51,18 @@ export default class VoiceChat {
 	}
 
 	getGroup(uuid: string) {
-		return this._client.groups.get(uuid);
+		return this._client.getGroups().get(uuid);
 	}
 
 	getGroups() {
-		return Array.from(this._client.groups.values()).map((data) => ({
+		return Array.from(this._client.getGroups().values()).map((data) => ({
 			...data,
 			id: Utils.uuidToString(data.id),
 		}));
 	}
 
 	joinGroup(name: string, password?: string) {
-		const group = Array.from(this._client.groups.values()).find(
+		const group = Array.from(this._client.getGroups().values()).find(
 			(group) => group.name === name,
 		);
 
@@ -70,25 +70,25 @@ export default class VoiceChat {
 			throw new Error(`Group "${name}" not found!`);
 		}
 
-		this._client.setGroupPacket.send({
+		this._client.getPackets().setGroupPacket.send({
 			group: group.id,
 			password,
 		});
 	}
 
 	joinGroupByUUID(uuid: string, password?: string) {
-		this._client.setGroupPacket.send({
+		this._client.getPackets().setGroupPacket.send({
 			group: Utils.stringToUUID(uuid),
 			password,
 		});
 	}
 
 	leaveGroup() {
-		this._client.leaveGroupPacket.send({});
+		this._client.getPackets().leaveGroupPacket.send({});
 	}
 
 	isConnected() {
-		return this._client.connected;
+		return this._client.isConnected();
 	}
 
 	stopAudio() {
@@ -202,11 +202,14 @@ export default class VoiceChat {
 
 				const opus = opusEncoder.encode(frame);
 
-				this._client.socketClient.micPacket.send({
-					sequenceNumber: BigInt(sequenceNumber),
-					data: opus,
-					whispering: false,
-				});
+				this._client
+					.getSocketClient()
+					.getPackets()
+					.micPacket.send({
+						sequenceNumber: BigInt(sequenceNumber),
+						data: opus,
+						whispering: false,
+					});
 
 				const nextPacketTime =
 					loopStartTime +

@@ -17,50 +17,89 @@ import { StoredData } from "./packet/StoredData";
 import { Utils } from "./utils";
 import SimpleVoiceSocketClient from "./VoiceChatSocketClient";
 
-export default class SimpleVoiceClient {
-	private readonly bot;
-	private readonly _compatibilityVersion: number = 18;
+// Интерфейс для пакетов
+interface PacketRegistry {
+	requestSecretPacket: ServerboundRequestSecretPacket;
+	secretPacket: ClientboundSecretPacket;
+	playerStatePacket: ClientboundPlayerStatePacket;
+	playerStatesPacket: ClientboundPlayerStatesPacket;
+	addGroupPacket: ClientboundAddGroupPacket;
+	setGroupPacket: ServerboundSetGroupPacket;
+	removeGroupPacket: ClientboundRemoveGroupPacket;
+	leaveGroupPacket: ServerboundLeaveGroupPacket;
+	joinedGroupPacket: ClientboundJoinedGroupPacket;
+}
 
-	readonly socketClient;
-
-	// Packets
-	readonly requestSecretPacket;
-	readonly secretPacket;
-	readonly playerStatePacket;
-	readonly playerStatesPacket;
-	readonly setGroupPacket;
-	readonly addGroupPacket;
-	readonly removeGroupPacket;
-	readonly leaveGroupPacket;
-	readonly joinedGroupPacket;
-
-	// Data
-	connected: boolean = false;
-	players: Map<string, ClientboundPlayerStatePacketData> = new Map();
-	groups: Map<string, ClientboundAddGroupPacketData> = new Map();
+export default class VoiceChatClient {
+	private readonly bot: Bot;
+	private readonly compatibilityVersion: number = 18;
+	private readonly socketClient: SimpleVoiceSocketClient;
+	private readonly logger = log.getSubLogger({ name: "VoiceClient" });
+	private readonly packets: PacketRegistry;
+	private connected: boolean = false;
+	private players: Map<string, ClientboundPlayerStatePacketData> = new Map();
+	private groups: Map<string, ClientboundAddGroupPacketData> = new Map();
 
 	constructor(bot: Bot) {
 		this.bot = bot;
 		this.socketClient = new SimpleVoiceSocketClient(bot);
+		this.logger.debug("Initializing SimpleVoiceClient");
 
-		// Packets
-		this.requestSecretPacket = new ServerboundRequestSecretPacket(bot);
-		this.secretPacket = new ClientboundSecretPacket(bot);
-		this.playerStatePacket = new ClientboundPlayerStatePacket(bot);
-		this.playerStatesPacket = new ClientboundPlayerStatesPacket(bot);
-		this.addGroupPacket = new ClientboundAddGroupPacket(bot);
-		this.setGroupPacket = new ServerboundSetGroupPacket(bot);
-		this.removeGroupPacket = new ClientboundRemoveGroupPacket(bot);
-		this.leaveGroupPacket = new ServerboundLeaveGroupPacket(bot);
-		this.joinedGroupPacket = new ClientboundJoinedGroupPacket(bot);
-
+		this.packets = this.initializePackets();
 		this.setupEvents();
 	}
 
-	registerChannels() {
-		log.debug("Registering channels..");
+	public getSocketClient(): SimpleVoiceSocketClient {
+		return this.socketClient;
+	}
 
-		// "voicechat:request_secret" - no clientbound packets
+	public isConnected(): boolean {
+		return this.connected;
+	}
+
+	public getPlayers(): Map<string, ClientboundPlayerStatePacketData> {
+		return this.players;
+	}
+
+	public getGroups(): Map<string, ClientboundAddGroupPacketData> {
+		return this.groups;
+	}
+
+	public getNameBySenderID(senderID: string): string | undefined {
+		const player = this.players.get(senderID);
+		return player?.name;
+	}
+
+	public getIdByName(username: string): string | undefined {
+		for (const [id, player] of this.players) {
+			if (player.name === username) {
+				return id;
+			}
+		}
+		return undefined;
+	}
+
+	private initializePackets(): PacketRegistry {
+		return {
+			requestSecretPacket: new ServerboundRequestSecretPacket(this.bot),
+			secretPacket: new ClientboundSecretPacket(this.bot),
+			playerStatePacket: new ClientboundPlayerStatePacket(this.bot),
+			playerStatesPacket: new ClientboundPlayerStatesPacket(this.bot),
+			addGroupPacket: new ClientboundAddGroupPacket(this.bot),
+			setGroupPacket: new ServerboundSetGroupPacket(this.bot),
+			removeGroupPacket: new ClientboundRemoveGroupPacket(this.bot),
+			leaveGroupPacket: new ServerboundLeaveGroupPacket(this.bot),
+			joinedGroupPacket: new ClientboundJoinedGroupPacket(this.bot),
+		};
+	}
+
+	public getPackets() {
+		return this.packets;
+	}
+
+	private registerChannels(): void {
+		this.logger.debug("Registering channels");
+
 		const channels = [
 			"voicechat:secret",
 			"voicechat:player_state",
@@ -78,56 +117,51 @@ export default class SimpleVoiceClient {
 		}
 	}
 
-	setupEvents() {
-		this.bot.once("login", () => this.registerChannels());
+	private setupEvents(): void {
+		this.bot.once("login", () => {
+			this.registerChannels();
+		});
 
 		this.bot.on("spawn", () => {
-			this.requestSecretPacket.send({
-				compatibilityVersion: this._compatibilityVersion,
+			this.packets.requestSecretPacket.send({
+				compatibilityVersion: this.compatibilityVersion,
 			});
 		});
 
-		this.secretPacket.on("packet", (data) => {
+		this.packets.secretPacket.on("packet", (data) => {
 			this.connected = false;
 			this.players.clear();
 			this.groups.clear();
-
 			StoredData.secretPacketData = data;
 
 			this.socketClient.connect();
-			this.socketClient.socket!.on("connect", () => {
-				log.getSubLogger({ name: "Socket" }).debug(
-					"Connected to the socket",
+			this.socketClient.on("connect", () => {
+				this.logger.debug(
+					"Connected to socket, sending authentication",
 				);
 
 				this.setupSocketEvents();
 
-				this.socketClient.authenticatePacket.send({
+				this.socketClient.getPackets().authenticatePacket.send({
 					playerUUID: StoredData.secretPacketData.playerUUID,
 					secret: StoredData.secretPacketData.secret,
 				});
 			});
 		});
 
-		this.playerStatePacket.on("packet", (data) => {
+		this.packets.playerStatePacket.on("packet", (data) => {
 			this.players.set(Utils.uuidToString(data.playerUUID), data);
 		});
 
-		this.playerStatesPacket.on("packet", (data) => {
+		this.packets.playerStatesPacket.on("packet", (data) => {
 			this.players = data;
 		});
 
-		this.addGroupPacket.on("packet", (data) => {
-			this.groups.set(Utils.uuidToString(data.id), data);
-		});
-
-		this.removeGroupPacket.on("packet", (data) => {
-			this.groups.delete(Utils.uuidToString(data.id));
-		});
-
-		this.addGroupPacket.on("packet", (data) => {
+		this.packets.addGroupPacket.on("packet", (data) => {
+			const groupId = Utils.uuidToString(data.id);
+			this.groups.set(groupId, data);
 			this.bot.emit("voicechat_group_add", {
-				id: Utils.uuidToString(data.id),
+				id: groupId,
 				name: data.name,
 				hasPassword: data.hasPassword,
 				persistent: data.persistent,
@@ -136,48 +170,38 @@ export default class SimpleVoiceClient {
 			});
 		});
 
-		this.removeGroupPacket.on("packet", (data) => {
-			this.bot.emit("voicechat_group_remove", {
-				id: Utils.uuidToString(data.id),
-			});
+		this.packets.removeGroupPacket.on("packet", (data) => {
+			const groupId = Utils.uuidToString(data.id);
+			this.groups.delete(groupId);
+			this.bot.emit("voicechat_group_remove", { id: groupId });
 		});
 	}
 
-	getNameBySenderID(senderID: string): string | undefined {
-		const player = this.players.get(senderID);
-		return player ? player.name : undefined;
-	}
-
-	getIdByName(username: string): string | undefined {
-		for (const [id, player] of this.players) {
-			if (player.name === username) {
-				return id;
-			}
+	private setupSocketEvents(): void {
+		const socketPackets = this.socketClient.getPackets();
+		if (!socketPackets) {
+			this.logger.error("Socket packets not initialized");
+			return;
 		}
-		return undefined;
-	}
 
-	setupSocketEvents() {
-		this.socketClient.authenticateAckPacket.on("packet", (_) => {
-			this.socketClient.connectionCheckPacket.send({});
+		socketPackets.authenticateAckPacket.on("packet", () => {
+			socketPackets.connectionCheckPacket.send({});
 		});
 
-		this.socketClient.connectionCheckAckPacket.on("packet", (_) => {
+		socketPackets.connectionCheckAckPacket.on("packet", () => {
 			this.connected = true;
-
 			this.bot.emit("voicechat_connect");
 		});
 
-		this.socketClient.clientboundKeepAlivePacket.on("packet", (_) => {
-			this.socketClient.serverboundKeepAlivePacket.send({});
+		socketPackets.clientboundKeepAlivePacket.on("packet", () => {
+			socketPackets.serverboundKeepAlivePacket.send({});
 		});
 
-		this.socketClient.clientboundPingPacket.on("packet", (_) => {
-			this.socketClient.serverboundPingPacket.send({});
+		socketPackets.clientboundPingPacket.on("packet", () => {
+			socketPackets.serverboundPingPacket.send({});
 		});
 
-		// Sound packets
-		this.socketClient.playerSoundPacket.on("packet", (data) => {
+		socketPackets.playerSoundPacket.on("packet", (data) => {
 			this.bot.emit("voicechat_player_sound", {
 				...data,
 				channelId: Utils.uuidToString(data.channelId),
@@ -185,7 +209,7 @@ export default class SimpleVoiceClient {
 			});
 		});
 
-		this.socketClient.locationSoundPacket.on("packet", (data) => {
+		socketPackets.locationSoundPacket.on("packet", (data) => {
 			this.bot.emit("voicechat_location_sound", {
 				...data,
 				channelId: Utils.uuidToString(data.channelId),
@@ -193,7 +217,7 @@ export default class SimpleVoiceClient {
 			});
 		});
 
-		this.socketClient.groupSoundPacket.on("packet", (data) => {
+		socketPackets.groupSoundPacket.on("packet", (data) => {
 			this.bot.emit("voicechat_group_sound", {
 				...data,
 				channelId: Utils.uuidToString(data.channelId),
