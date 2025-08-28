@@ -104,13 +104,13 @@ export default class VoiceChatSocketClient extends EventEmitter {
 
 		this.socket.on("close", () => {
 			this.logger.warn("Socket closed");
-			this.socket!.close();
+			this.close();
 			this.emit("close");
 		});
 
 		this.socket.on("error", (err) => {
 			this.logger.fatal(`Socket error: ${err.message}`);
-			this.socket!.close();
+			this.close();
 			this.emit("error", err);
 		});
 	}

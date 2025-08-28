@@ -118,15 +118,21 @@ export default class VoiceChatClient {
 	private setupEvents(): void {
 		this.logger.debug("Setting up events");
 
+		this.bot.once("login", () => {
+			this.registerChannels();
+		});
+
 		this.bot._client.on("state", (state) => {
-			if (state == "configuration") {
-				this.registerChannels();
+			if (state == "play") {
+				this.connected = false;
 
+				setTimeout(() => {
+					this.packets.requestSecretPacket.send({
+						compatibilityVersion: this.compatibilityVersion,
+					});
+				}, 1000);
+			} else {
 				this.socketClient.close();
-
-				this.packets.requestSecretPacket.send({
-					compatibilityVersion: this.compatibilityVersion,
-				});
 			}
 		});
 
@@ -139,12 +145,14 @@ export default class VoiceChatClient {
 			// this.socketClient.close();
 			this.socketClient.connect();
 
+			this.socketClient.once("connect", () => {
+				this.setupSocketEvents();
+			});
+
 			this.socketClient.on("connect", () => {
 				this.logger.debug(
 					"Connected to socket, sending authentication",
 				);
-
-				this.setupSocketEvents();
 
 				const connector = setInterval(() => {
 					if (!this.socketClient.isConnected() || this.connected) {
