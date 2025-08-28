@@ -121,6 +121,7 @@ export default class VoiceChatClient {
 		});
 
 		this.bot.on("spawn", () => {
+			if (this.connected) return;
 			this.packets.requestSecretPacket.send({
 				compatibilityVersion: this.compatibilityVersion,
 			});
@@ -144,6 +145,12 @@ export default class VoiceChatClient {
 					playerUUID: StoredData.secretPacketData.playerUUID,
 					secret: StoredData.secretPacketData.secret,
 				});
+			});
+			this.socketClient.on("close", () => {
+				this.connected = false;
+			});
+			this.socketClient.on("error", () => {
+				this.connected = false;
 			});
 		});
 
