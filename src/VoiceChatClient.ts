@@ -59,43 +59,23 @@ export default class SimpleVoiceClient {
 
 	registerChannels() {
 		log.debug("Registering channels..");
-		this.bot._client.registerChannel("voicechat:secret", undefined, true);
-		this.bot._client.registerChannel(
+
+		// "voicechat:request_secret" - no clientbound packets
+		const channels = [
+			"voicechat:secret",
 			"voicechat:player_state",
-			undefined,
-			true,
-		);
-		this.bot._client.registerChannel(
 			"voicechat:player_states",
-			undefined,
-			true,
-		);
-		this.bot._client.registerChannel(
 			"voicechat:set_group",
-			undefined,
-			true,
-		);
-		this.bot._client.registerChannel(
 			"voicechat:add_group",
-			undefined,
-			true,
-		);
-		this.bot._client.registerChannel(
 			"voicechat:remove_group",
-			undefined,
-			true,
-		);
-		this.bot._client.registerChannel(
 			"voicechat:leave_group",
-			undefined,
-			true,
-		);
-		this.bot._client.registerChannel(
 			"voicechat:joined_group",
-			undefined,
-			true,
-		);
-		this.bot._client.registerChannel("voicechat:main", undefined, true);
+			"voicechat:main",
+		];
+
+		for (const channel of channels) {
+			this.bot._client.registerChannel(channel, undefined, true);
+		}
 	}
 
 	setupEvents() {
@@ -121,6 +101,11 @@ export default class SimpleVoiceClient {
 				);
 
 				this.setupSocketEvents();
+
+				this.socketClient.authenticatePacket.send({
+					playerUUID: StoredData.secretPacketData.playerUUID,
+					secret: StoredData.secretPacketData.secret,
+				});
 			});
 		});
 
@@ -173,11 +158,6 @@ export default class SimpleVoiceClient {
 	}
 
 	setupSocketEvents() {
-		this.socketClient.authenticatePacket.send({
-			playerUUID: StoredData.secretPacketData.playerUUID,
-			secret: StoredData.secretPacketData.secret,
-		});
-
 		this.socketClient.authenticateAckPacket.on("packet", (_) => {
 			this.socketClient.connectionCheckPacket.send({});
 		});
@@ -196,36 +176,28 @@ export default class SimpleVoiceClient {
 			this.socketClient.serverboundPingPacket.send({});
 		});
 
+		// Sound packets
 		this.socketClient.playerSoundPacket.on("packet", (data) => {
 			this.bot.emit("voicechat_player_sound", {
+				...data,
 				channelId: Utils.uuidToString(data.channelId),
 				sender: this.getNameBySenderID(Utils.uuidToString(data.sender)),
-				data: data.data,
-				sequenceNumber: data.sequenceNumber,
-				distance: data.distance,
-				whispering: data.whispering,
-				category: data.category,
 			});
 		});
 
 		this.socketClient.locationSoundPacket.on("packet", (data) => {
 			this.bot.emit("voicechat_location_sound", {
+				...data,
 				channelId: Utils.uuidToString(data.channelId),
 				sender: this.getNameBySenderID(Utils.uuidToString(data.sender)),
-				data: data.data,
-				sequenceNumber: data.sequenceNumber,
-				distance: data.distance,
-				category: data.category,
 			});
 		});
 
 		this.socketClient.groupSoundPacket.on("packet", (data) => {
 			this.bot.emit("voicechat_group_sound", {
+				...data,
 				channelId: Utils.uuidToString(data.channelId),
 				sender: this.getNameBySenderID(Utils.uuidToString(data.sender)),
-				data: data.data,
-				sequenceNumber: data.sequenceNumber,
-				category: data.category,
 			});
 		});
 	}
