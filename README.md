@@ -1,4 +1,4 @@
-<h1 align="center">mineflayer-simple-voice</h1>
+<h1 align="center">mineflayer-simplevoice</h1>
 <p align="center"><i>A lightweight plugin for Mineflayer that allows use VoiceChat for Simple Voice Chat mod</i></p>
 
 # Features
@@ -10,13 +10,13 @@
 
 # Getting Started
 #### Installation
-1) This plugin is built using Node and can be installed using: ```npm install mineflayer-simple-voice --save```
+1) This plugin is built using Node and can be installed using: ```npm install mineflayer-simplevoice --save```
 
 #### Simple Sound Player
 A bot that sneaks will play a certain sound (/path/to/music.mp3) and get up.
 ```js
 const mineflayer = require("mineflayer")
-const simplevoice = require("mineflayer-simple-voice")
+const simplevoice = require("mineflayer-simplevoice")
 
 const bot = mineflayer.createBot({
     "host": "localhost"
@@ -31,7 +31,7 @@ bot.on("voicechat_connected", () => {
 
 #### Debugging
 ```js
-const simplevoice = require("mineflayer-simple-voice")
+const simplevoice = require("mineflayer-simplevoice")
 
 /** By default - 4, and these are warnings, errors and fatal errors */
 simplevoice.setLoggingLevel(0)
