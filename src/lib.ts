@@ -25,8 +25,14 @@ export default class VoiceChat {
 		resume: () => void;
 	} | null = null;
 
+	private sequenceNumber: bigint = 0n;
+
 	constructor(bot: Bot) {
 		this._client = new VoiceChatClient(bot);
+
+		bot.on("voicechat_connect", () => {
+			this.sequenceNumber = 0n;
+		});
 	}
 
 	getPlayer(player: string) {
@@ -130,18 +136,12 @@ export default class VoiceChat {
 			throw log.error("Another audio stream is already active!");
 		}
 
-		try {
-			const pcmBuffer = await SoundConverter.convertToPCM(
-				audio,
-				this.SAMPLE_RATE,
-				this.CHANNELS,
-			);
-			await this.sendPCM(pcmBuffer);
-		} finally {
-			this.isStreaming = false;
-			this.isPaused = false;
-			this.currentStreamController = null;
-		}
+		const pcmBuffer = await SoundConverter.convertToPCM(
+			audio,
+			this.SAMPLE_RATE,
+			this.CHANNELS,
+		);
+		await this.sendPCM(pcmBuffer);
 	}
 
 	async sendPCM(pcmBuffer: Buffer) {
@@ -160,7 +160,7 @@ export default class VoiceChat {
 			this.FRAME_DURATION_MS *
 			this.CHANNELS *
 			2; // 1920 bytes
-		let sequenceNumber = 0;
+
 		let shouldStop = false;
 		let isPaused = false;
 
@@ -179,6 +179,7 @@ export default class VoiceChat {
 		this.currentStreamController = controller;
 
 		const loopStartTime = performance.now();
+		const initialSequenceNumber = Number(this.sequenceNumber);
 
 		try {
 			for (let i = 0; i < pcmBuffer.length; i += frameSize) {
@@ -202,22 +203,20 @@ export default class VoiceChat {
 
 				const opus = opusEncoder.encode(frame);
 
-				this._client
-					.getSocketClient()
-					.getPackets()
-					.micPacket.send({
-						sequenceNumber: BigInt(sequenceNumber),
-						data: opus,
-						whispering: false,
-					});
+				this._client.getSocketClient().getPackets().micPacket.send({
+					sequenceNumber: this.sequenceNumber,
+					data: opus,
+					whispering: false,
+				});
 
 				const nextPacketTime =
 					loopStartTime +
-					(sequenceNumber + 1) * this.FRAME_DURATION_MS;
+					(Number(this.sequenceNumber) - initialSequenceNumber + 1) *
+						this.FRAME_DURATION_MS;
 
 				const delay = nextPacketTime - performance.now();
 
-				sequenceNumber++;
+				this.sequenceNumber++;
 
 				if (delay > 0) {
 					await sleep(delay);
