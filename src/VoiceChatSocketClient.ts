@@ -35,7 +35,7 @@ interface PacketRegistry {
 export default class VoiceChatSocketClient extends EventEmitter {
 	private readonly bot: Bot;
 	private socket?: dgram.Socket;
-	private packets: PacketRegistry | null = null;
+	private packets: PacketRegistry | undefined;
 	private readonly logger = log.getSubLogger({ name: "Socket" });
 
 	constructor(bot: Bot) {
@@ -46,26 +46,41 @@ export default class VoiceChatSocketClient extends EventEmitter {
 
 	public connect(): void {
 		if (this.socket) {
-			this.logger.warn("Socket is already connected");
-			return;
+			this.close();
 		}
 
 		this.socket = dgram.createSocket("udp4");
 		this.setupSocketListeners();
 
-		const ip = this.resolveIp();
-		const port = StoredData.secretPacketData.serverPort;
+		let ip;
+		let port;
+		if (StoredData.secretPacketData.voiceHost != "") {
+			ip = StoredData.secretPacketData.voiceHost.split(":")[0];
+			port = parseInt(
+				StoredData.secretPacketData.voiceHost.split(":")[1],
+			);
+		} else {
+			ip = "127.0.0.1";
+			port = StoredData.secretPacketData.serverPort;
+		}
 
 		this.logger.debug(`Connecting to ${ip}:${port}`);
 		this.socket.connect(port, ip);
+	}
+
+	public getSocket(): dgram.Socket | undefined {
+		return this.socket;
+	}
+
+	public isConnected(): boolean {
+		return this.socket !== undefined && this.packets !== undefined;
 	}
 
 	public close(): void {
 		if (this.socket) {
 			this.socket.close();
 			this.socket = undefined;
-			this.packets = null;
-			this.logger.debug("Socket closed and cleaned up");
+			this.packets = undefined;
 		}
 	}
 
@@ -74,24 +89,6 @@ export default class VoiceChatSocketClient extends EventEmitter {
 			throw new Error("Packet registry is not initialized");
 
 		return this.packets;
-	}
-
-	private resolveIp(): string {
-		const voiceHost = StoredData.secretPacketData.voiceHost;
-		if (voiceHost.length > 0) {
-			try {
-				return new URL(`voicechat://${voiceHost}`).host;
-			} catch (e) {
-				this.logger.error(`Invalid voice host URL: ${voiceHost}`);
-				throw new Error(`Invalid voice host URL: ${voiceHost}`);
-			}
-		}
-		if (!this.bot._client.socket.remoteAddress) {
-			throw new Error(
-				"Bot client socket remote address is not available",
-			);
-		}
-		return this.bot._client.socket.remoteAddress;
 	}
 
 	private setupSocketListeners(): void {
@@ -107,13 +104,13 @@ export default class VoiceChatSocketClient extends EventEmitter {
 
 		this.socket.on("close", () => {
 			this.logger.warn("Socket closed");
-			this.packets = null;
+			this.socket!.close();
 			this.emit("close");
 		});
 
 		this.socket.on("error", (err) => {
 			this.logger.fatal(`Socket error: ${err.message}`);
-			this.close();
+			this.socket!.close();
 			this.emit("error", err);
 		});
 	}

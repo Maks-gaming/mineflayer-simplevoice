@@ -116,15 +116,18 @@ export default class VoiceChatClient {
 	}
 
 	private setupEvents(): void {
-		this.bot.once("login", () => {
-			this.registerChannels();
-		});
+		this.logger.debug("Setting up events");
 
-		this.bot.on("spawn", () => {
-			if (this.connected) return;
-			this.packets.requestSecretPacket.send({
-				compatibilityVersion: this.compatibilityVersion,
-			});
+		this.bot._client.on("state", (state) => {
+			if (state == "configuration") {
+				this.registerChannels();
+
+				this.socketClient.close();
+
+				this.packets.requestSecretPacket.send({
+					compatibilityVersion: this.compatibilityVersion,
+				});
+			}
 		});
 
 		this.packets.secretPacket.on("packet", (data) => {
@@ -133,7 +136,9 @@ export default class VoiceChatClient {
 			this.groups.clear();
 			StoredData.secretPacketData = data;
 
+			// this.socketClient.close();
 			this.socketClient.connect();
+
 			this.socketClient.on("connect", () => {
 				this.logger.debug(
 					"Connected to socket, sending authentication",
@@ -141,10 +146,16 @@ export default class VoiceChatClient {
 
 				this.setupSocketEvents();
 
-				this.socketClient.getPackets().authenticatePacket.send({
-					playerUUID: StoredData.secretPacketData.playerUUID,
-					secret: StoredData.secretPacketData.secret,
-				});
+				const connector = setInterval(() => {
+					if (!this.socketClient.isConnected() || this.connected) {
+						clearInterval(connector);
+					}
+
+					this.socketClient.getPackets().authenticatePacket.send({
+						playerUUID: StoredData.secretPacketData.playerUUID,
+						secret: StoredData.secretPacketData.secret,
+					});
+				}, 500);
 			});
 			this.socketClient.on("close", () => {
 				this.connected = false;
@@ -180,6 +191,8 @@ export default class VoiceChatClient {
 			this.groups.delete(groupId);
 			this.bot.emit("voicechat_group_remove", { id: groupId });
 		});
+
+		this.logger.debug("Event listeners registered");
 	}
 
 	private setupSocketEvents(): void {
