@@ -231,6 +231,17 @@ export default class VoiceChatClient {
 		});
 
 		socketPackets.playerSoundPacket.on("packet", (data) => {
+			if (data.data.length == 0) {
+				this.bot.emit("voicechat_player_sound_end", {
+					...data,
+					channelId: Utils.uuidToString(data.channelId),
+					sender: this.getNameBySenderID(
+						Utils.uuidToString(data.sender),
+					),
+				});
+				return;
+			}
+
 			this.bot.emit("voicechat_player_sound", {
 				...data,
 				data: this.opusEncoder.decode(data.data),
@@ -240,6 +251,17 @@ export default class VoiceChatClient {
 		});
 
 		socketPackets.locationSoundPacket.on("packet", (data) => {
+			if (data.data.length == 0) {
+				this.bot.emit("voicechat_location_sound_end", {
+					...data,
+					channelId: Utils.uuidToString(data.channelId),
+					sender: this.getNameBySenderID(
+						Utils.uuidToString(data.sender),
+					),
+				});
+				return;
+			}
+
 			this.bot.emit("voicechat_location_sound", {
 				...data,
 				data: this.opusEncoder.decode(data.data),
@@ -249,6 +271,17 @@ export default class VoiceChatClient {
 		});
 
 		socketPackets.groupSoundPacket.on("packet", (data) => {
+			if (data.data.length == 0) {
+				this.bot.emit("voicechat_group_sound_end", {
+					...data,
+					channelId: Utils.uuidToString(data.channelId),
+					sender: this.getNameBySenderID(
+						Utils.uuidToString(data.sender),
+					),
+				});
+				return;
+			}
+
 			this.bot.emit("voicechat_group_sound", {
 				...data,
 				data: this.opusEncoder.decode(data.data),

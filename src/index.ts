@@ -30,6 +30,13 @@ declare module "mineflayer" {
 			distance: number;
 			category?: string;
 		}) => void;
+		voicechat_location_sound_end: (data: {
+			channelId: string;
+			sender?: string;
+			sequenceNumber: BigInt;
+			distance: number;
+			category?: string;
+		}) => void;
 		voicechat_player_sound: (data: {
 			channelId: string;
 			sender?: string;
@@ -39,10 +46,24 @@ declare module "mineflayer" {
 			whispering: boolean;
 			category?: string;
 		}) => void;
+		voicechat_player_sound_end: (data: {
+			channelId: string;
+			sender?: string;
+			sequenceNumber: BigInt;
+			distance: number;
+			whispering: boolean;
+			category?: string;
+		}) => void;
 		voicechat_group_sound: (data: {
 			channelId: string;
 			sender?: string;
 			data: Buffer;
+			sequenceNumber: BigInt;
+			category?: string;
+		}) => void;
+		voicechat_group_sound_end: (data: {
+			channelId: string;
+			sender?: string;
 			sequenceNumber: BigInt;
 			category?: string;
 		}) => void;
