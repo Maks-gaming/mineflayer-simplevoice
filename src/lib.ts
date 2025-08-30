@@ -183,6 +183,11 @@ export default class VoiceChat {
 
 		try {
 			for (let i = 0; i < pcmBuffer.length; i += frameSize) {
+				if (!this.isConnected()) {
+					log.warn("Voice chat disconnected, stopping audio stream.");
+					break;
+				}
+
 				if (shouldStop) {
 					break;
 				}

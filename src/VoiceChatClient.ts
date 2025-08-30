@@ -124,20 +124,18 @@ export default class VoiceChatClient {
 
 		this.bot._client.on("state", (state) => {
 			if (state == "play") {
-				this.connected = false;
-
 				setTimeout(() => {
 					this.packets.requestSecretPacket.send({
 						compatibilityVersion: this.compatibilityVersion,
 					});
 				}, 1000);
 			} else {
+				this.connected = false;
 				this.socketClient.close();
 			}
 		});
 
 		this.packets.secretPacket.on("packet", (data) => {
-			this.connected = false;
 			this.players.clear();
 			this.groups.clear();
 			StoredData.secretPacketData = data;
