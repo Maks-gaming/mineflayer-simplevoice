@@ -235,6 +235,7 @@ export default class VoiceChatClient {
 			this.bot.emit("voicechat_player_sound", {
 				...data,
 				data: this.opusEncoder.decode(data.data),
+				raw: data.data,
 				channelId: Utils.uuidToString(data.channelId),
 				sender: this.getNameBySenderID(Utils.uuidToString(data.sender)),
 			});
@@ -244,6 +245,7 @@ export default class VoiceChatClient {
 			this.bot.emit("voicechat_location_sound", {
 				...data,
 				data: this.opusEncoder.decode(data.data),
+				raw: data.data,
 				channelId: Utils.uuidToString(data.channelId),
 				sender: this.getNameBySenderID(Utils.uuidToString(data.sender)),
 			});
@@ -253,6 +255,7 @@ export default class VoiceChatClient {
 			this.bot.emit("voicechat_group_sound", {
 				...data,
 				data: this.opusEncoder.decode(data.data),
+				raw: data.data,
 				channelId: Utils.uuidToString(data.channelId),
 				sender: this.getNameBySenderID(Utils.uuidToString(data.sender)),
 			});
