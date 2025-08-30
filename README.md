@@ -24,8 +24,8 @@ const bot = mineflayer.createBot({
 
 bot.loadPlugin(simplevoice.plugin)
 
-bot.on("voicechat_connected", () => {
-    bot.setControlState("sneak", true)
+bot.on("voicechat_connect", () => {
+    bot.voicechat.sendAudio("/path/to/music.mp3");
 })
 ```
 
