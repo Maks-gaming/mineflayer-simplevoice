@@ -1,5 +1,5 @@
 import crypto from "crypto";
-import { StoredData } from "./packet/StoredData";
+import { StoredData } from "./StoredData";
 
 export namespace AESEncryption {
 	export function encrypt(data: Buffer): Buffer {

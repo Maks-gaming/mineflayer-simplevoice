@@ -3,7 +3,7 @@ import EventEmitter from "events";
 import { AESEncryption } from "../../AESEncryption";
 import { FriendlyByteBuf } from "../../data/FriendlyByteBuf";
 import { log } from "../../lib";
-import { StoredData } from "../StoredData";
+import { StoredData } from "../../StoredData";
 
 const MAGIC_BYTE = 0xff;
 
