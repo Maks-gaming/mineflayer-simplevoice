@@ -26,6 +26,7 @@ declare module "mineflayer" {
 			channelId: string;
 			sender?: string;
 			data: Buffer;
+			raw: Buffer;
 			sequenceNumber: BigInt;
 			distance: number;
 			category?: string;
@@ -34,6 +35,7 @@ declare module "mineflayer" {
 			channelId: string;
 			sender?: string;
 			data: Buffer;
+			raw: Buffer;
 			sequenceNumber: BigInt;
 			distance: number;
 			whispering: boolean;
@@ -43,6 +45,7 @@ declare module "mineflayer" {
 			channelId: string;
 			sender?: string;
 			data: Buffer;
+			raw: Buffer;
 			sequenceNumber: BigInt;
 			category?: string;
 		}) => void;
