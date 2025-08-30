@@ -14,7 +14,7 @@ import ServerboundConnectionCheckPacket from "./packet/socket/Serverbound/Connec
 import ServerboundKeepAlivePacket from "./packet/socket/Serverbound/KeepAlivePacket";
 import ServerboundMicPacket from "./packet/socket/Serverbound/MicPacket";
 import ServerboundPingPacket from "./packet/socket/Serverbound/PingPacket";
-import { StoredData } from "./packet/StoredData";
+import { StoredData } from "./StoredData";
 
 interface PacketRegistry {
 	authenticatePacket: ServerboundAuthenticatePacket;

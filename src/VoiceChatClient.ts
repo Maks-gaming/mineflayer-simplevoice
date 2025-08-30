@@ -1,3 +1,4 @@
+import { OpusEncoder } from "@discordjs/opus";
 import { Bot } from "mineflayer";
 import { log } from "./lib";
 import ClientboundAddGroupPacket, {
@@ -13,7 +14,7 @@ import ClientboundSecretPacket from "./packet/client/Clientbound/SecretPacket";
 import ServerboundLeaveGroupPacket from "./packet/client/Serverbound/LeaveGroupPacket";
 import ServerboundRequestSecretPacket from "./packet/client/Serverbound/RequestSecretPacket";
 import ServerboundSetGroupPacket from "./packet/client/Serverbound/SetGroupPacket";
-import { StoredData } from "./packet/StoredData";
+import { StoredData } from "./StoredData";
 import { Utils } from "./utils";
 import SimpleVoiceSocketClient from "./VoiceChatSocketClient";
 
@@ -31,6 +32,10 @@ interface PacketRegistry {
 
 export default class VoiceChatClient {
 	private readonly bot: Bot;
+	private readonly opusEncoder = new OpusEncoder(
+		StoredData.SAMPLE_RATE,
+		StoredData.CHANNELS,
+	);
 	private readonly compatibilityVersion: number = 18;
 	private readonly socketClient: SimpleVoiceSocketClient;
 	private readonly logger = log.getSubLogger({ name: "VoiceClient" });
@@ -228,6 +233,7 @@ export default class VoiceChatClient {
 		socketPackets.playerSoundPacket.on("packet", (data) => {
 			this.bot.emit("voicechat_player_sound", {
 				...data,
+				data: this.opusEncoder.decode(data.data),
 				channelId: Utils.uuidToString(data.channelId),
 				sender: this.getNameBySenderID(Utils.uuidToString(data.sender)),
 			});
@@ -236,6 +242,7 @@ export default class VoiceChatClient {
 		socketPackets.locationSoundPacket.on("packet", (data) => {
 			this.bot.emit("voicechat_location_sound", {
 				...data,
+				data: this.opusEncoder.decode(data.data),
 				channelId: Utils.uuidToString(data.channelId),
 				sender: this.getNameBySenderID(Utils.uuidToString(data.sender)),
 			});
@@ -244,6 +251,7 @@ export default class VoiceChatClient {
 		socketPackets.groupSoundPacket.on("packet", (data) => {
 			this.bot.emit("voicechat_group_sound", {
 				...data,
+				data: this.opusEncoder.decode(data.data),
 				channelId: Utils.uuidToString(data.channelId),
 				sender: this.getNameBySenderID(Utils.uuidToString(data.sender)),
 			});

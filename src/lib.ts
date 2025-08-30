@@ -2,6 +2,7 @@ import { OpusEncoder } from "@discordjs/opus";
 import { Bot } from "mineflayer";
 import { Logger } from "tslog";
 import SoundConverter from "./SoundConverter";
+import { StoredData } from "./StoredData";
 import VoiceChatClient from "./VoiceChatClient";
 import { Utils } from "./utils";
 
@@ -11,11 +12,6 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 export default class VoiceChat {
 	/** Are you sure you need this? */
 	readonly _client;
-
-	private readonly SAMPLE_RATE = 48000;
-	private readonly CHANNELS = 1;
-	private readonly FRAME_DURATION_MS = 20;
-	private readonly BITRATE = 48000;
 
 	private isStreaming: boolean = false;
 	private isPaused: boolean = false;
@@ -138,8 +134,8 @@ export default class VoiceChat {
 
 		const pcmBuffer = await SoundConverter.convertToPCM(
 			audio,
-			this.SAMPLE_RATE,
-			this.CHANNELS,
+			StoredData.SAMPLE_RATE,
+			StoredData.CHANNELS,
 		);
 		await this.sendPCM(pcmBuffer);
 	}
@@ -152,13 +148,16 @@ export default class VoiceChat {
 		this.isStreaming = true;
 		this.isPaused = false;
 
-		const opusEncoder = new OpusEncoder(this.SAMPLE_RATE, this.CHANNELS);
-		opusEncoder.setBitrate(this.BITRATE);
+		const opusEncoder = new OpusEncoder(
+			StoredData.SAMPLE_RATE,
+			StoredData.CHANNELS,
+		);
+		opusEncoder.setBitrate(StoredData.BITRATE);
 
 		const frameSize =
-			(this.SAMPLE_RATE / 1000) *
-			this.FRAME_DURATION_MS *
-			this.CHANNELS *
+			(StoredData.SAMPLE_RATE / 1000) *
+			StoredData.FRAME_DURATION_MS *
+			StoredData.CHANNELS *
 			2; // 1920 bytes
 
 		let shouldStop = false;
@@ -217,7 +216,7 @@ export default class VoiceChat {
 				const nextPacketTime =
 					loopStartTime +
 					(Number(this.sequenceNumber) - initialSequenceNumber + 1) *
-						this.FRAME_DURATION_MS;
+						StoredData.FRAME_DURATION_MS;
 
 				const delay = nextPacketTime - performance.now();
 
