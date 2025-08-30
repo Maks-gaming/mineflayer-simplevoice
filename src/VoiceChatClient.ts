@@ -32,13 +32,13 @@ interface PacketRegistry {
 
 export default class VoiceChatClient {
 	private readonly bot: Bot;
-	private readonly opusEncoder = new OpusEncoder(
-		StoredData.SAMPLE_RATE,
-		StoredData.CHANNELS,
-	);
 	private readonly compatibilityVersion: number = 18;
 	private readonly socketClient: SimpleVoiceSocketClient;
 	private readonly logger = log.getSubLogger({ name: "VoiceClient" });
+	readonly opusEncoder = new OpusEncoder(
+		StoredData.SAMPLE_RATE,
+		StoredData.CHANNELS,
+	);
 	private readonly packets: PacketRegistry;
 	private connected: boolean = false;
 	private players: Map<string, ClientboundPlayerStatePacketData> = new Map();
@@ -46,8 +46,8 @@ export default class VoiceChatClient {
 
 	constructor(bot: Bot) {
 		this.bot = bot;
-		this.socketClient = new SimpleVoiceSocketClient(bot);
 		this.opusEncoder.setBitrate(StoredData.BITRATE);
+		this.socketClient = new SimpleVoiceSocketClient(bot);
 
 		this.packets = this.initializePackets();
 		this.setupEvents();

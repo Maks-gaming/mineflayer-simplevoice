@@ -1,4 +1,3 @@
-import { OpusEncoder } from "@discordjs/opus";
 import { Bot } from "mineflayer";
 import { Logger } from "tslog";
 import SoundConverter from "./SoundConverter";
@@ -148,12 +147,6 @@ export default class VoiceChat {
 		this.isStreaming = true;
 		this.isPaused = false;
 
-		const opusEncoder = new OpusEncoder(
-			StoredData.SAMPLE_RATE,
-			StoredData.CHANNELS,
-		);
-		opusEncoder.setBitrate(StoredData.BITRATE);
-
 		const frameSize =
 			(StoredData.SAMPLE_RATE / 1000) *
 			StoredData.FRAME_DURATION_MS *
@@ -205,7 +198,7 @@ export default class VoiceChat {
 					break;
 				}
 
-				const opus = opusEncoder.encode(frame);
+				const opus = this._client.opusEncoder.encode(frame);
 
 				this._client.getSocketClient().getPackets().micPacket.send({
 					sequenceNumber: this.sequenceNumber,
