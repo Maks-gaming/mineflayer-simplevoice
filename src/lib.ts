@@ -30,6 +30,7 @@ export default class VoiceChat {
 		});
 	}
 
+	/** Get player voice information by username */
 	getPlayer(player: string) {
 		const uuid = this._client.getIdByName(player);
 		if (!uuid) return undefined;
@@ -43,6 +44,7 @@ export default class VoiceChat {
 		return playerInfo;
 	}
 
+	/** Get all player voice information */
 	getPlayers() {
 		return Array.from(this._client.getPlayers().values()).map((data) => ({
 			...data,
@@ -51,10 +53,12 @@ export default class VoiceChat {
 		}));
 	}
 
+	/** Get group voice information by UUID */
 	getGroup(uuid: string) {
 		return this._client.getGroups().get(uuid);
 	}
 
+	/** Get all group voice information */
 	getGroups() {
 		return Array.from(this._client.getGroups().values()).map((data) => ({
 			...data,
@@ -62,6 +66,7 @@ export default class VoiceChat {
 		}));
 	}
 
+	/** Join a voice group by name */
 	joinGroup(name: string, password?: string) {
 		const group = Array.from(this._client.getGroups().values()).find(
 			(group) => group.name === name,
@@ -77,6 +82,7 @@ export default class VoiceChat {
 		});
 	}
 
+	/** Join a voice group by UUID */
 	joinGroupByUUID(uuid: string, password?: string) {
 		this._client.getPackets().setGroupPacket.send({
 			group: Utils.stringToUUID(uuid),
@@ -84,14 +90,17 @@ export default class VoiceChat {
 		});
 	}
 
+	/** Leave a voice group */
 	leaveGroup() {
 		this._client.getPackets().leaveGroupPacket.send({});
 	}
 
+	/** Check if the client is connected to the voice chat */
 	isConnected() {
 		return this._client.isConnected();
 	}
 
+	/** Stop the audio stream */
 	stopAudio() {
 		if (this.currentStreamController) {
 			this.currentStreamController.stop();
@@ -102,6 +111,7 @@ export default class VoiceChat {
 		}
 	}
 
+	/** Pause the audio stream */
 	pauseAudio() {
 		if (
 			this.isStreaming &&
@@ -114,6 +124,7 @@ export default class VoiceChat {
 		}
 	}
 
+	/** Resume the audio stream */
 	resumeAudio() {
 		if (this.isStreaming && this.isPaused && this.currentStreamController) {
 			this.currentStreamController.resume();
@@ -122,6 +133,11 @@ export default class VoiceChat {
 		}
 	}
 
+	/**
+	 * Send an audio file to the voice chat
+	 * @param audio Path to the audio file (wav, mp3, ogg, flac, etc.)
+	 * @throws Will throw an error if the voice chat is not connected or if another audio stream is active
+	 */
 	async sendAudio(audio: string): Promise<void> {
 		if (!this.isConnected()) {
 			throw log.error("Voice chat is not loaded!");
@@ -139,6 +155,11 @@ export default class VoiceChat {
 		await this.sendPCM(pcmBuffer);
 	}
 
+	/**
+	 * Send a raw PCM buffer to the voice chat
+	 * @param pcmBuffer Raw PCM buffer (16-bit signed PCM, 48kHz, mono)
+	 * @throws Will throw an error if the voice chat is not connected or if another audio stream is active
+	 */
 	async sendPCM(pcmBuffer: Buffer) {
 		if (this.isStreaming) {
 			throw log.error("Another PCM stream is already active!");

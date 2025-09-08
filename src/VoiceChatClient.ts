@@ -219,8 +219,10 @@ export default class VoiceChatClient {
 		});
 
 		socketPackets.connectionCheckAckPacket.on("packet", () => {
-			this.connected = true;
-			this.bot.emit("voicechat_connect");
+			if (!this.connected) {
+				this.connected = true;
+				this.bot.emit("voicechat_connect");
+			}
 		});
 
 		socketPackets.clientboundKeepAlivePacket.on("packet", () => {

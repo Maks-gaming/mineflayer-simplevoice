@@ -4,7 +4,7 @@
 		"type": "git",
 		"url": "git+https://github.com/Maks-gaming/mineflayer-simplevoice.git"
 	},
-	"version": "1.1.0",
+	"version": "1.1.1",
 	"description": "A plugin for mineflayer that allows you to play sounds with the Simple Voicechat mod",
 	"main": "lib/index.js",
 	"types": "lib/index.d.ts",
