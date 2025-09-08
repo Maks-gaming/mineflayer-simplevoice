@@ -55,10 +55,15 @@ export default class VoiceChatSocketClient extends EventEmitter {
 		let ip;
 		let port;
 		if (StoredData.secretPacketData.voiceHost != "") {
-			ip = StoredData.secretPacketData.voiceHost.split(":")[0];
-			port = parseInt(
-				StoredData.secretPacketData.voiceHost.split(":")[1],
-			);
+			if (!StoredData.secretPacketData.voiceHost.includes(":")) {
+				ip = StoredData.secretPacketData.voiceHost.split(":")[0];
+				port = parseInt(
+					StoredData.secretPacketData.voiceHost.split(":")[1],
+				);
+			} else {
+				ip = StoredData.secretPacketData.voiceHost;
+				port = StoredData.secretPacketData.serverPort;
+			}
 		} else {
 			ip = "127.0.0.1";
 			port = StoredData.secretPacketData.serverPort;
