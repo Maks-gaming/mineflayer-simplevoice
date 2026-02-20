@@ -160,7 +160,7 @@ export default class VoiceChatClient {
 
 				const connector = setInterval(() => {
 					if (!this.socketClient.isConnected() || this.connected) {
-						clearInterval(connector);
+						return clearInterval(connector);
 					}
 
 					this.socketClient.getPackets().authenticatePacket.send({
